@@ -1,0 +1,10 @@
+fastapi==0.110.1
+uvicorn==0.25.0
+opencv-python-headless>=4.8.0.76
+pillow>=10.0.1
+numpy>=1.26.0
+passlib>=1.7.4
+pyjwt>=2.10.1
+python-multipart>=0.0.9
+bcrypt>=4.0.1
+slowapi>=0.1.9

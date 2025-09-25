@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Transfer Studio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 2rem; color: white; }
+        .header h1 { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        .auth-section { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 2rem; }
+        .auth-form { display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        input[type="text"], input[type="password"] { padding: 12px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+        input[type="text"]:focus, input[type="password"]:focus { outline: none; border-color: #667eea; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd8; transform: translateY(-2px); }
+        .btn-logout { background: #f56565; color: white; }
+        .main-app { display: none; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .upload-section { padding: 2rem; border-bottom: 1px solid #e1e5e9; }
+        .drop-zone { border: 3px dashed #667eea; border-radius: 12px; padding: 3rem 2rem; text-align: center; transition: all 0.3s; cursor: pointer; }
+        .drop-zone.dragover { border-color: #5a6fd8; background: #f7fafc; }
+        .drop-zone-content h3 { color: #667eea; margin-bottom: 1rem; font-size: 1.5rem; }
+        .drop-zone-content p { color: #666; margin-bottom: 1rem; }
+        .file-input { display: none; }
+        .presets-section { padding: 2rem; border-bottom: 1px solid #e1e5e9; }
+        .presets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .preset-btn { padding: 1rem; border: 2px solid #e1e5e9; border-radius: 12px; background: white; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .preset-btn:hover { border-color: #667eea; transform: translateY(-2px); }
+        .preset-btn.selected { border-color: #667eea; background: #f7fafc; }
+        .preview-section { padding: 2rem; }
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
+        .preview-item { text-align: center; }
+        .preview-item h4 { margin-bottom: 1rem; color: #666; }
+        .preview-image { max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .loading { display: none; text-align: center; padding: 2rem; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status { text-align: center; padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+        .status.success { background: #c6f6d5; color: #2f855a; }
+        .status.error { background: #fed7d7; color: #c53030; }
+        .rate-limit-info { text-align: center; color: #666; font-size: 0.9rem; margin-top: 1rem; }
+        @media (max-width: 768px) { .header h1 { font-size: 2rem; } .auth-form { flex-direction: column; } .preview-grid { grid-template-columns: 1fr; } .presets-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Style Transfer Studio</h1>
+            <p>Transform your images and videos with AI-powered style presets</p>
+        </div>
+        
+        <div class="auth-section" id="auth-section">
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="username" value="admin" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" value="admin123" placeholder="Enter password">
+                </div>
+                <button class="btn btn-primary" onclick="login()">Login</button>
+            </div>
+        </div>
+        
+        <div class="main-app" id="main-app">
+            <div class="upload-section">
+                <h2>Upload Image or Video</h2>
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="drop-zone-content">
+                        <h3>📁 Drop your file here</h3>
+                        <p>Or click to browse</p>
+                        <p><small>Supports: JPG, PNG, MP4, AVI, MOV (max 10 seconds)</small></p>
+                    </div>
+                </div>
+                <input type="file" id="file-input" class="file-input" accept="image/*,video/*">
+                <button class="btn btn-logout" onclick="logout()" style="float: right; margin-top: 1rem;">Logout</button>
+            </div>
+            
+            <div class="presets-section">
+                <h2>Choose Style Preset</h2>
+                <div class="presets-grid">
+                    <div class="preset-btn selected" data-preset="pixar"><h4>🎬 Pixar</h4><p>Cartoon-like</p></div>
+                    <div class="preset-btn" data-preset="anime"><h4>🎌 Anime</h4><p>Vibrant anime style</p></div>
+                    <div class="preset-btn" data-preset="realis"><h4>📷 Realis</h4><p>Realistic enhance</p></div>
+                    <div class="preset-btn" data-preset="lego"><h4>🧱 Lego</h4><p>Blocky effect</p></div>
+                    <div class="preset-btn" data-preset="fiksi_ilmiah"><h4>🚀 Fiksi Ilmiah</h4><p>Sci-fi blue tint</p></div>
+                    <div class="preset-btn" data-preset="kartun_retro"><h4>📺 Kartun Retro</h4><p>Vintage cartoon</p></div>
+                </div>
+                <div class="rate-limit-info">Rate limit: 5 requests per minute</div>
+            </div>
+            
+            <div class="preview-section">
+                <h2>Preview & Result</h2>
+                <div class="preview-grid">
+                    <div class="preview-item"><h4>Original</h4><img id="original-preview" class="preview-image" style="display: none;"></div>
+                    <div class="preview-item"><h4>Styled Result</h4><img id="result-preview" class="preview-image" style="display: none;"></div>
+                </div>
+                <div class="loading" id="loading"><div class="spinner"></div><p>Applying style transfer...</p></div>
+                <div id="status"></div>
+                <div style="text-align: center; margin-top: 2rem;"><button class="btn btn-primary" id="process-btn" onclick="processFile()" disabled>Apply Style Transfer</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let authToken = null; let selectedFile = null; let selectedPreset = 'pixar';
+        const savedToken = localStorage.getItem('authToken'); if (savedToken) { authToken = savedToken; showMainApp(); }
+        async function login() { const username = document.getElementById('username').value; const password = document.getElementById('password').value; try { const response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json', }, body: JSON.stringify({ username, password }) }); if (response.ok) { const data = await response.json(); authToken = data.access_token; localStorage.setItem('authToken', authToken); showMainApp(); showStatus('Login successful!', 'success'); } else { const error = await response.json(); showStatus(error.detail || 'Login failed', 'error'); } } catch (err) { showStatus('Login error: ' + err.message, 'error'); } }
+        function logout() { authToken = null; localStorage.removeItem('authToken'); document.getElementById('auth-section').style.display = 'block'; document.getElementById('main-app').style.display = 'none'; }
+        function showMainApp() { document.getElementById('auth-section').style.display = 'none'; document.getElementById('main-app').style.display = 'block'; }
+        const dropZone = document.getElementById('drop-zone'); const fileInput = document.getElementById('file-input');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); const files = e.dataTransfer.files; if (files.length > 0) { handleFileSelect(files[0]); } });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { handleFileSelect(e.target.files[0]); } });
+        function handleFileSelect(file) { selectedFile = file; const reader = new FileReader(); reader.onload = (e) => { const originalPreview = document.getElementById('original-preview'); originalPreview.src = e.target.result; originalPreview.style.display = 'block'; document.getElementById('process-btn').disabled = false; }; reader.readAsDataURL(file); }
+        document.querySelectorAll('.preset-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); selectedPreset = btn.dataset.preset; }); });
+        async function processFile() { if (!selectedFile || !authToken) return; const formData = new FormData(); formData.append('file', selectedFile); formData.append('preset', selectedPreset); document.getElementById('loading').style.display = 'block'; document.getElementById('result-preview').style.display = 'none'; document.getElementById('process-btn').disabled = true; try { const response = await fetch('/process', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken }, body: formData }); if (response.ok) { const blob = await response.blob(); const imageUrl = URL.createObjectURL(blob); const resultPreview = document.getElementById('result-preview'); resultPreview.src = imageUrl; resultPreview.style.display = 'block'; showStatus('Style transfer completed successfully!', 'success'); } else { const error = await response.json(); showStatus(error.detail || 'Processing failed', 'error'); } } catch (err) { showStatus('Processing error: ' + err.message, 'error'); } finally { document.getElementById('loading').style.display = 'none'; document.getElementById('process-btn').disabled = false; } }
+        function showStatus(message, type) { const status = document.getElementById('status'); status.textContent = message; status.className = 'status ' + type; setTimeout(() => { status.textContent = ''; status.className = 'status'; }, 5000); }
+    </script>
+</body>
+</html>
